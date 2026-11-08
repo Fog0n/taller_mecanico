@@ -75,7 +75,7 @@ taller_mecanico/
 
 ## Estado actual
 
-Estructura inicial, login visual sin autenticación real.
+Login con **autenticación real** contra la tabla `usuarios` (usuarios de prueba: `admin/admin123`, `recepcion/recepc123`) y flujo de sesión completo (login → menú → salir → login). Las pantallas internas (clientes, vehículos, órdenes) están en desarrollo.
 
 ## Notas
 
