@@ -1,0 +1,4 @@
+# Dependencias del proyecto "Taller Mecánico"
+customtkinter
+mysql-connector-python
+python-dotenv
