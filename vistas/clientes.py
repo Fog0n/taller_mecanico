@@ -146,7 +146,7 @@ class ClientesVista(ctk.CTkToplevel):
     def _fila_encabezado(self) -> None:
         """Pinta la cabecera de la tabla."""
         anchos = [8, 25, 15, 22, 16, 14]
-        textos = ["ID", "Nombre", "Teléfono", "Email", "RFC", "Tipo"]
+        textos = ["#", "Nombre", "Teléfono", "Email", "RFC", "Tipo"]
         for col, (texto, peso) in enumerate(zip(textos, anchos)):
             ctk.CTkLabel(
                 self.frame_lista, text=texto.ljust(peso),
@@ -156,11 +156,15 @@ class ClientesVista(ctk.CTkToplevel):
         self.frame_lista.grid_columnconfigure(len(anchos) + 1, weight=2)  # columna de botones
 
     def _fila_cliente(self, indice: int, cliente, fondo: bool) -> None:
-        """Pinta una fila de cliente con sus botones Editar / Eliminar."""
+        """Pinta una fila de cliente con sus botones Editar / Eliminar.
+
+        La primera columna es enumeración visual consecutiva (#1, #2, ...);
+        el cliente_id real de la BD queda interno y se usa en las acciones.
+        """
         fila = indice + 1
         color = "#252525" if fondo else "transparent"
         textos = [
-            str(cliente.cliente_id),
+            f"#{indice + 1}",  # Numeración de posición (estética de lista)
             cliente.nombre,
             cliente.telefono,
             cliente.email or "",
