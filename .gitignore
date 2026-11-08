@@ -15,3 +15,6 @@ venv/
 # Configuración de editores / IDEs
 .vscode/
 .idea/
+
+# Grafo de conocimiento (exportable, se regenera con /graphify)
+graphify-out/

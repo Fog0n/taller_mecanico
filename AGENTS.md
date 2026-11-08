@@ -35,6 +35,16 @@ Proyecto escolar de escritorio: **Python 3.11+ + CustomTkinter (GUI) + MySQL ví
 - Contraseñas en texto plano por ahora (decisión de alcance); fase posterior las hashea.
 - Estética: colores/fuentes/tamaños definidos solo en `config/tema.py` (`COLOR_*`, `FUENTE_*`, `LOGIN_SIZE`, `MENU_SIZE`); las vistas no hardcodean estilos.
 
+## Grafo de conocimiento (graphify)
+
+- `graphify-out/` contiene el grafo generado y está en `.gitignore`: **artefacto regenerable, nunca commitear**. Si existe `graphify-out/graph.json`, preguntas sobre el código se responden con el grafo (fast path) en vez de re-escanear.
+- El paquete es `graphifyy` y está instalado en el **Python global (Python313)**, NO en el venv del proyecto → usar `python -m graphify ...` (el venv no lo tiene; el CLI directo por `dispatch_command` no acepta strings).
+- Mejor referencia del CLI: `python -m graphify <comando>` (p. ej. `python -m graphify export html`). El módulo `graphify.cli` expone `dispatch_command` pero desvía por `sys.argv`.
+- Para que el SQL participe en el AST: `pip install "graphifyy[sql]"` (instalado en el global).
+- Salida de consola con acentos: exportar `PYTHONIOENCODING="utf-8"` antes de correr graphify.
+- La extracción semántica (README, AGENTS, requirements) se hace **inline por el agente** con el schema de `references/extraction-spec.md` del skill (no hay GEMINI_API_KEY; no pedir claves).
+- Tras cambios de código: `/graphify . --update` (incremental, se apoya en `manifest.json`). Cuidado: la extracción semántica inline de los 3 docs no usa caché — se re-hace en cada `--update` (coste trivial).
+
 ## Git
 
 - Trunk-based: commits directos en `main` (rama única, draft school team); mensajes `<type>: <descripción>` en español (`feat`, `fix`, `docs`, `chore`).
