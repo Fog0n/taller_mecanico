@@ -75,7 +75,7 @@ taller_mecanico/
 
 ## Estado actual
 
-Login con **autenticación real** contra la tabla `usuarios` (usuarios de prueba: `admin/admin123`, `recepcion/recepc123`) y flujo de sesión completo (login → menú → salir → login). Las pantallas internas (clientes, vehículos, órdenes) están en desarrollo.
+Login con **autenticación real** contra la tabla `usuarios` (usuarios de prueba: `admin/admin123`, `recepcion/recepc123`), flujo de sesión completo (login → menú → salir → login) y **CRUD funcional de Clientes y Vehículos** desde el menú. Órdenes de trabajo en desarrollo.
 
 ## Notas
 
