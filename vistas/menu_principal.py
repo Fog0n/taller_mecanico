@@ -38,6 +38,11 @@ class MenuPrincipalVista(ctk.CTk):
 
         # Botones de navegación
         textos = ["Clientes", "Vehículos", "Órdenes", "Cobros", "Reportes", "Salir"]
+        comandos = {
+            "Clientes": self.abrir_clientes,   # Módulo funcional desde esta fase
+            "Salir": self.cerrar_sesion,
+            # Los demás módulos se implementan en fases posteriores
+        }
         for texto in textos:
             boton = ctk.CTkButton(
                 self.frame_lateral,
@@ -45,8 +50,7 @@ class MenuPrincipalVista(ctk.CTk):
                 font=tema.FUENTE_BOTON,
                 fg_color=tema.COLOR_BOTON,
                 width=180,
-                # "Salir" cierra la sesión; el resto son marcadores de fase posterior
-                command=(self.cerrar_sesion if texto == "Salir" else None),
+                command=comandos.get(texto),
             )
             boton.pack(pady=8, padx=10)
 
@@ -62,6 +66,12 @@ class MenuPrincipalVista(ctk.CTk):
             text_color=tema.COLOR_TEXTO,
         )
         self.label_bienvenida.place(relx=0.5, rely=0.5, anchor="center")
+
+    def abrir_clientes(self) -> None:
+        """Abre la ventana de administración de clientes."""
+        from vistas.clientes import ClientesVista  # Import tardío (evita ciclo)
+
+        ClientesVista(self.usuario).transient(self)  # Encima del menú
 
     def cerrar_sesion(self) -> None:
         """Cierra la sesión: destruye el menú y vuelve al login."""
