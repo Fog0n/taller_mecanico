@@ -13,8 +13,11 @@ from config import tema
 class MenuPrincipalVista(ctk.CTk):
     """Ventana principal de la aplicación tras iniciar sesión."""
 
-    def __init__(self):
+    def __init__(self, usuario=None):
         super().__init__()
+
+        # Usuario autenticado que abrió la sesión
+        self.usuario = usuario
 
         # Configuración de la ventana
         self.title("Taller Mecánico - Menú Principal")
@@ -42,7 +45,7 @@ class MenuPrincipalVista(ctk.CTk):
                 font=tema.FUENTE_BOTON,
                 fg_color=tema.COLOR_BOTON,
                 width=180,
-                # Por ahora "Salir" cierra la sesión; el resto son marcadores
+                # "Salir" cierra la sesión; el resto son marcadores de fase posterior
                 command=(self.cerrar_sesion if texto == "Salir" else None),
             )
             boton.pack(pady=8, padx=10)
@@ -51,15 +54,19 @@ class MenuPrincipalVista(ctk.CTk):
         self.area_central = ctk.CTkFrame(self, corner_radius=0, fg_color=tema.COLOR_FONDO)
         self.area_central.pack(side="right", fill="both", expand=True)
 
-        # Mensaje de bienvenida
+        # Mensaje de bienvenida (personalizado con el nombre del usuario)
         self.label_bienvenida = ctk.CTkLabel(
             self.area_central,
-            text="Bienvenido",
+            text=f"Bienvenido, {self.usuario.nombre}" if self.usuario else "Bienvenido",
             font=tema.FUENTE_TITULO,
             text_color=tema.COLOR_TEXTO,
         )
         self.label_bienvenida.place(relx=0.5, rely=0.5, anchor="center")
 
     def cerrar_sesion(self) -> None:
-        """Cierra la ventana (se reabrirá el login en una etapa posterior)."""
+        """Cierra la sesión: destruye el menú y vuelve al login."""
         self.destroy()
+
+        from vistas.login import LoginVista  # Import tardío (evita ciclo)
+
+        LoginVista().mainloop()

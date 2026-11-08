@@ -1,14 +1,15 @@
 """
 Vista de inicio de sesión.
 
-Ventana visual con campos de usuario y contraseña.
-Por ahora solo valida que los campos no estén vacíos;
-la autenticación real contra la BD se implementará después.
+Ventana con autenticación real contra la tabla usuarios de MySQL.
+Compara la contraseña en texto plano por ahora; el hashing
+se implementará en una etapa posterior.
 """
 
 import customtkinter as ctk
 
 from config import tema
+from dao.usuario_dao import obtener_por_username
 
 
 class LoginVista(ctk.CTk):
@@ -71,12 +72,7 @@ class LoginVista(ctk.CTk):
         self.eval("tk::PlaceWindow . center")
 
     def iniciar_sesion(self) -> None:
-        """
-        Validación preliminar: campos obligatorios no vacíos.
-
-        La autenticación real (usuarios de la BD) se implementará
-        en una etapa posterior.
-        """
+        """Valida credenciales contra la BD y abre el menú principal."""
         usuario = self.entry_usuario.get().strip()
         password = self.entry_password.get().strip()
 
@@ -88,8 +84,26 @@ class LoginVista(ctk.CTk):
             )
             return
 
-        # Mensaje provisional: aquí iría la conexión a la BD más adelante
-        self.label_error.configure(
-            text=f"Bienvenido, {usuario}. (Autenticación en desarrollo)",
-            text_color=tema.COLOR_TEXTO,
-        )
+        # Consulta del usuario en la base de datos
+        try:
+            encontrado = obtener_por_username(usuario)
+        except RuntimeError:
+            self.label_error.configure(
+                text="Sin conexión a MySQL. Verifícalo en el Panel de Control de XAMPP.",
+                text_color=tema.COLOR_ERROR,
+            )
+            return
+
+        # Autenticación: usuario existe y contraseña coincide
+        if encontrado is None or encontrado.password != password:
+            self.label_error.configure(
+                text="Usuario o contraseña incorrectos.",
+                text_color=tema.COLOR_ERROR,
+            )
+            return
+
+        # Login correcto: cerrar login y abrir el menú principal
+        from vistas.menu_principal import MenuPrincipalVista  # Import tardío (evita ciclo)
+
+        self.destroy()
+        MenuPrincipalVista(encontrado).mainloop()
