@@ -4,6 +4,9 @@ DAO de órdenes: acceso a datos de las tablas ordenes y detalle_orden.
 La creación de una orden es TRANSACCIONAL (all-or-nothing): si alguna
 línea falla (p. ej. stock de refacciones insuficiente) se revierte
 todo y no quedan ni órdenes huérfanas ni stock desfasado.
+
+El descuento de stock de refacciones se delega al trigger de BD
+trg_detalle_orden_descontar_stock (BEFORE INSERT en detalle_orden).
 """
 
 from modelos.orden import Orden
@@ -14,7 +17,7 @@ from db.conexion import obtener_conexion
 EstadoValido = ("abierta", "en_proceso", "terminada", "entregada", "pagada")
 
 
-def _leer_servicios_y_refacciones(cursor):
+def _leer_precios(cursor):
     """Contenidos de precios consistentes con la transacción activa."""
     precios_serv = {}
     cursor.execute("SELECT servicio_id, precio FROM servicios")
@@ -35,6 +38,10 @@ def crear_orden(matricula: str, cliente_id: int, usuario_id: int,
     Lanza RuntimeError con mensaje claro si algo no puede completarse
     (stock insuficiente, tipo desconocido, etc.); en ese caso nada queda
     escrito en la base de datos.
+
+    El descuento de stock se ejecuta en el trigger de BD
+    trg_detalle_orden_descontar_stock al insertar cada detalle de tipo
+    'refaccion'.
     """
     if not detalles:
         raise RuntimeError("Una orden necesita al menos una línea de detalle.")
@@ -42,20 +49,23 @@ def crear_orden(matricula: str, cliente_id: int, usuario_id: int,
     try:
         conexion = obtener_conexion()
         cursor = conexion.cursor()
+        conexion.autocommit = False  # controlamos COMMIT/ROLLBACK manualmente
 
-        # 1. Cabeza de la orden (entrada = ahora)
+        # 1. Cabecera de la orden vía procedimiento almacenado
         cursor.execute(
-            "INSERT INTO ordenes (matricula, cliente_id, usuario_id, "
-            "fecha_entrada, hora_entrada, estado) "
-            "VALUES (%s, %s, %s, CURDATE(), CURTIME(), 'abierta')",
+            "CALL sp_crear_orden(%s, %s, %s, @orden_id)",
             (matricula, cliente_id, usuario_id),
         )
-        orden_id = cursor.lastrowid
+        cursor.execute("SELECT @orden_id")
+        fila = cursor.fetchone()
+        if not fila or fila[0] is None:
+            raise RuntimeError("No se pudo obtener el orden_id generado.")
+        orden_id = int(fila[0])
 
         # 2. Precios vigentes (dentro de la transacción)
-        precios_serv, precios_ref = _leer_servicios_y_refacciones(cursor)
+        precios_serv, precios_ref = _leer_precios(cursor)
 
-        # 3. Líneas de detalle (inventariado y subtotales)
+        # 3. Líneas de detalle (el trigger valida y descuenta stock)
         for tipo, item_id, cantidad in detalles:
             if tipo == "servicio":
                 if item_id not in precios_serv:
@@ -65,18 +75,6 @@ def crear_orden(matricula: str, cliente_id: int, usuario_id: int,
                 if item_id not in precios_ref:
                     raise RuntimeError("La refacción seleccionada no existe.")
                 precio_unitario = precios_ref[item_id]
-                # Descuento de stock dentro de la transacción: si no hay
-                # inventario, la condición evita stock negativo y el
-                # rollback deshace también la cabecera
-                cursor.execute(
-                    "UPDATE refacciones SET stock = stock - %s "
-                    "WHERE refaccion_id = %s AND stock >= %s",
-                    (cantidad, item_id, cantidad),
-                )
-                if cursor.rowcount == 0:
-                    raise RuntimeError(
-                        "Stock insuficiente de la refacción (se canceló toda la orden)."
-                    )
             else:
                 raise RuntimeError(f"Tipo de línea desconocido: {tipo}")
 
@@ -94,7 +92,6 @@ def crear_orden(matricula: str, cliente_id: int, usuario_id: int,
         return orden_id
 
     except RuntimeError:
-        # Nuestro propio error de negocio: revertir y propagarlo con mensaje claro
         try:
             conexion.rollback()
             cursor.close()
@@ -172,6 +169,53 @@ def calcular_total(orden_id: int) -> float:
         return float(total)
     except Exception as error:
         raise RuntimeError(f"No se pudo calcular el total de la orden: {error}") from error
+
+
+def eliminar(orden_id: int) -> None:
+    """
+    Elimina una orden por su id.
+
+    Primero borra las líneas de detalle una por una (disparando el trigger
+    trg_detalle_orden_restaurar_stock que devuelve el stock de refacciones),
+    y luego borra la cabecera. La BD usa ON DELETE CASCADE como respaldo,
+    pero el borrado explícito de detalles es necesario para que los triggers
+    se ejecuten (MariaDB no dispara triggers en cascada).
+    """
+    try:
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+        conexion.autocommit = False
+
+        # 1. Leer detalles para saber qué restaurar (opcional: el trigger ya lo hace)
+        cursor.execute(
+            "SELECT detalle_id, tipo, item_id, cantidad FROM detalle_orden WHERE orden_id = %s",
+            (orden_id,),
+        )
+        detalles = cursor.fetchall()
+
+        # 2. Borrar cada detalle explícitamente (dispara trigger AFTER DELETE)
+        for detalle_id, tipo, item_id, cantidad in detalles:
+            cursor.execute(
+                "DELETE FROM detalle_orden WHERE detalle_id = %s",
+                (detalle_id,),
+            )
+
+        # 3. Borrar la cabecera (ON DELETE CASCADE borraría restos, si los hubiera)
+        cursor.execute("DELETE FROM ordenes WHERE orden_id = %s", (orden_id,))
+        if cursor.rowcount == 0:
+            raise RuntimeError("La orden no existe.")
+
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+    except Exception as error:
+        try:
+            conexion.rollback()
+            cursor.close()
+            conexion.close()
+        except Exception:
+            pass
+        raise RuntimeError(f"No se pudo eliminar la orden: {error}") from error
 
 
 def cambiar_estado(orden_id: int, nuevo_estado: str) -> None:

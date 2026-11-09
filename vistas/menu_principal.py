@@ -41,8 +41,9 @@ class MenuPrincipalVista(ctk.CTk):
         comandos = {
             "Clientes": self.abrir_clientes,    # Módulo funcional desde esta fase
             "Vehículos": self.abrir_vehiculos,  # Módulo funcional desde esta fase
+            "Órdenes": self.abrir_ordenes,      # Módulo funcional desde esta fase
             "Salir": self.cerrar_sesion,
-            # Los demás módulos se implementan en fases posteriores
+            # Cobros y Reportes se implementan en fases posteriores
         }
         for texto in textos:
             boton = ctk.CTkButton(
@@ -79,6 +80,12 @@ class MenuPrincipalVista(ctk.CTk):
         from vistas.vehiculos import VehiculosVista  # Import tardío (evita ciclo)
 
         VehiculosVista(self.usuario).transient(self)  # Encima del menú
+
+    def abrir_ordenes(self) -> None:
+        """Abre la ventana de gestión de órdenes de trabajo."""
+        from vistas.ordenes import OrdenesVista  # Import tardío (evita ciclo)
+
+        OrdenesVista(self.usuario).transient(self)  # Encima del menú
 
     def cerrar_sesion(self) -> None:
         """Cierra la sesión: destruye el menú y vuelve al login."""

@@ -17,12 +17,23 @@ Proyecto escolar de escritorio: **Python 3.11+ + CustomTkinter (GUI) + MySQL ví
 
 - Ejecutar app: `venv\Scripts\python.exe main.py` (desde `taller_mecanico/`). No mata la ventana; el proceso vive en segundo plano y termina limpio al cerrar la ventana.
 - Recrear BD desde cero: `cmd /c "C:\xampp\mysql\bin\mysql.exe -u root --default-character-set=utf8mb4 < db\script_mysql.sql"`.
+- Aplicar triggers y procedimientos (solo si no existen): `cmd /c "C:\xampp\mysql\bin\mysql.exe -u root --default-character-set=utf8mb4 < db\triggers_procedures.sql"`.
 - Verificar referencias después de cambios: `venv\Scripts\python.exe -m py_compile <archivos>`. No hay tests ni lint configurados.
 - PowerShell aquí falla con strings C# `python -c "..."` multilínea (codificación); para pruebas rápidas escribir un script temporal `*.py` y borrarlo.
 
-## Trampas conocidas
+## Objetos de base de datos (triggers y procedimientos)
 
-- **NO re-importar `db\script_mysql.sql`** si la BD ya existe: los `INSERT` de usuarios no están protegidos con `INSERT IGNORE`, se duplicarían los usuarios de prueba.
+La BD `taller_mecanico` incluye objetos almacenados definidos en `db\script_mysql.sql` y `db\triggers_procedures.sql`:
+
+| Objeto | Nombre | Descripción |
+|--------|--------|-------------|
+| Trigger | `trg_detalle_orden_descontar_stock` | BEFORE INSERT en `detalle_orden`. Valida y descuenta stock de refacciones automáticamente. Lanza error si stock insuficiente. |
+| Trigger | `trg_detalle_orden_restaurar_stock` | AFTER DELETE en `detalle_orden`. Restaura stock al borrar una línea de detalle. |
+| Procedimiento | `sp_crear_orden` | Crea la cabecera de una orden y devuelve `orden_id` (OUT param). El DAO controla la transacción completa (cabecera + detalles). |
+
+**Nota importante (MariaDB):** los triggers no se disparan con `ON DELETE CASCADE`. Por eso, `orden_dao.eliminar()` borra los detalles explícitamente uno por uno antes de borrar la cabecera, para que el trigger de restauración se ejecute.
+
+**No re-importar `db\script_mysql.sql`** si la BD ya existe y se agregaron triggers/procedimientos después: los `INSERT` de usuarios no usan `INSERT IGNORE` y se duplicarían. Usar `db\triggers_procedures.sql` para agregar solo los objetos nuevos.
 - La app debe abrir el login **aunque MySQL esté apagado** (solo advertencia en consola). `probar_conexion()` devuelve `True/False` sin lanzar excepciones; el DAO de usuarios sí lanza `RuntimeError`.
 - `vistas/login.py` y `vistas/menu_principal.py` chocan con imports circulares: importarlos **dentro de los métodos** (patrón de import tardío ya usado).
 - El flujo de sesión encadena ventanas: `LoginVista.destroy()` → `MenuPrincipalVista(usuario).mainloop()`; salir hace lo inverso. Cada `CTk` es un root Tk nuevo (los mensajes `invalid command name "..._animation"` al cerrar son ruido inofensivo de CustomTkinter).
