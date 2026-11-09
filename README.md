@@ -42,7 +42,8 @@ Aplicación de escritorio en Python con CustomTkinter para la gestión de un tal
    - **Linux / Mac:** `cp .env.example .env`
 6. Abrir [http://localhost/phpmyadmin](http://localhost/phpmyadmin), ir a la pestaña **Importar** y cargar el archivo `db/script_mysql.sql` (o abrir la pestaña **SQL** y copiar y pegar su contenido).
 7. Verificar que la base de datos `taller_mecanico` y sus tablas existan en phpMyAdmin.
-8. Ejecutar la aplicación: ```python main.py```
+8. (Si la BD ya existía y se agregan los objetos nuevos) Ejecutar `db/triggers_procedures.sql` para crear los triggers y el procedimiento almacenado.
+9. Ejecutar la aplicación: ```python main.py```
 
 ## Estructura del proyecto
 
@@ -60,24 +61,53 @@ taller_mecanico/
 ├── db/
 │   ├── __init__.py
 │   ├── conexion.py        # Conexión y prueba de MySQL
-│   └── script_mysql.sql   # Creación de BD y tablas
+│   ├── script_mysql.sql   # Creación de BD, tablas, triggers y procedimientos
+│   └── triggers_procedures.sql  # Triggers y procedimientos almacenados (objetos nuevos de BD)
+├── dao/
+│   ├── __init__.py
+│   ├── cliente_dao.py
+│   ├── orden_dao.py       # Órdenes transaccionales (crear, estados, detalle, eliminar) + SP sp_crear_orden
+│   ├── refaccion_dao.py
+│   ├── servicio_dao.py
+│   └── vehiculo_dao.py
 ├── modelos/               # Clases de dominio (pendiente)
-│   └── __init__.py
-├── dao/                   # Acceso a datos (pendiente)
 │   └── __init__.py
 ├── vistas/
 │   ├── __init__.py
 │   ├── login.py           # Ventana de inicio de sesión
-│   └── menu_principal.py  # Menú principal
+│   ├── menu_principal.py  # Menú principal (conecta Clientes, Vehículos y Órdenes)
+│   └── ordenes.py         # Gestión de órdenes: ticket, estados, detalle, eliminar, stock visible
 └── utils/                 # Utilidades (pendiente)
     └── __init__.py
 ```
 
 ## Estado actual
 
-Login con **autenticación real** contra la tabla `usuarios` (usuarios de prueba: `admin/admin123`, `recepcion/recepc123`), flujo de sesión completo (login → menú → salir → login) y **CRUD funcional de Clientes y Vehículos** desde el menú. Órdenes de trabajo en desarrollo.
+Login con **autenticación real** contra la tabla `usuarios` (usuarios de prueba: `admin/admin123`, `recepcion/recepc123`), flujo de sesión completo (login → menú → salir → login), **CRUD funcional de Clientes y Vehículos** desde el menú, y **Órdenes de trabajo completas**:
+
+- **Crear orden** con líneas de servicios y refacciones (ticket en construcción con total dinámico)
+- **Stock visible**: label "Stock disponible" junto al combo de artículos, se actualiza al cambiar tipo y tras registrar
+- **Transacción con rollback**: si hay stock insuficiente, no queda ni orden ni líneas huérfanas
+- **Flujo de estados**: Abierta → En proceso → Terminada → Entregada → Pagada (semáforo de colores)
+- **Detalle de orden**: líneas, subtotales, fecha de entrada/salida, total
+- **Eliminar orden** con confirmación y borrado en cascada (detalles y pagos)
+- **Triggers de BD**: descuento automático de stock al insertar detalle y restauración al eliminar
+- **Procedimiento almacenado** `sp_crear_orden` para la cabecera de la orden
+
 
 ## Notas
 
 - 🔐 **Contraseñas:** los usuarios de prueba (`admin/admin123`, `recepcion/recepc123`) se insertan con la contraseña en **texto plano solo para las primeras pruebas**. En una etapa posterior deberán hashearse (por ejemplo, con `bcrypt`).
 - ⚠️ **MySQL/XAMPP:** si el servicio MySQL no está activo en XAMPP, la app se abre igualmente pero mostrará una advertencia en consola indicando que debe iniciarse desde el Panel de Control de XAMPP.
+
+## Objetos de base de datos (triggers y procedimientos)
+
+La BD incluye los siguientes objetos almacenados (definidos en `db/script_mysql.sql` y `db/triggers_procedures.sql`):
+
+| Objeto | Nombre | Propósito |
+|--------|--------|-----------|
+| Trigger | `trg_detalle_orden_descontar_stock` | Descuenta stock de refacciones al insertar un detalle de orden (valida stock suficiente). |
+| Trigger | `trg_detalle_orden_restaurar_stock` | Restaura stock al eliminar una línea de detalle de orden. |
+| Procedimiento | `sp_crear_orden` | Crea la cabecera de una orden y devuelve el `orden_id` generado. |
+
+**Nota (MariaDB):** los triggers no se disparan con `ON DELETE CASCADE`. Por eso el DAO borra los detalles explícitamente antes de eliminar la cabecera, para que el trigger de restauración se ejecute.
