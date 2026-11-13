@@ -65,34 +65,56 @@ taller_mecanico/
 │   └── triggers_procedures.sql  # Triggers y procedimientos almacenados (objetos nuevos de BD)
 ├── dao/
 │   ├── __init__.py
-│   ├── cliente_dao.py
-│   ├── orden_dao.py       # Órdenes transaccionales (crear, estados, detalle, eliminar) + SP sp_crear_orden
-│   ├── refaccion_dao.py
-│   ├── servicio_dao.py
+│   ├── cliente_dao.py      # CRUD de clientes (incluye campo frecuente)
+│   ├── orden_dao.py        # Órdenes transaccionales (crear, estados, detalle, eliminar) + SP sp_crear_orden
+│   ├── refaccion_dao.py    # CRUD de refacciones + descontar_stock (inventario)
+│   ├── servicio_dao.py     # CRUD de servicios (catálogo)
 │   └── vehiculo_dao.py
-├── modelos/               # Clases de dominio (pendiente)
-│   └── __init__.py
+├── modelos/                # Clases de dominio (dataclasses)
+│   ├── __init__.py
+│   ├── cliente.py
+│   ├── detalle_orden.py
+│   ├── orden.py
+│   ├── refaccion.py
+│   ├── servicio.py
+│   ├── usuario.py
+│   └── vehiculo.py
 ├── vistas/
 │   ├── __init__.py
-│   ├── login.py           # Ventana de inicio de sesión
-│   ├── menu_principal.py  # Menú principal (conecta Clientes, Vehículos y Órdenes)
-│   └── ordenes.py         # Gestión de órdenes: ticket, estados, detalle, eliminar, stock visible
-└── utils/                 # Utilidades (pendiente)
+│   ├── login.py            # Ventana de inicio de sesión (fija 400x500)
+│   ├── menu_principal.py   # Menú principal (Clientes, Vehículos, Órdenes, Catálogos)
+│   ├── clientes.py         # CRUD de clientes + marca manual de "cliente frecuente" (★)
+│   ├── vehiculos.py        # CRUD de vehículos (matrícula = PK, no editable en edición)
+│   ├── ordenes.py          # Órdenes: ticket, estados, detalle, eliminar, stock visible
+│   └── catalogos.py        # Catálogos con pestañas: servicios + refacciones e inventario (± stock)
+└── utils/                  # Utilidades (pendiente)
     └── __init__.py
 ```
 
 ## Estado actual
 
-Login con **autenticación real** contra la tabla `usuarios` (usuarios de prueba: `admin/admin123`, `recepcion/recepc123`), flujo de sesión completo (login → menú → salir → login), **CRUD funcional de Clientes y Vehículos** desde el menú, y **Órdenes de trabajo completas**:
+Login con **autenticación real** contra la tabla `usuarios` (usuarios de prueba: `admin/admin123`, `recepcion/recepc123`), flujo de sesión completo (login → menú → salir → login) y los siguientes **módulos funcionales desde el menú**:
 
+**Clientes** — CRUD completo (nombre, teléfono, email, RFC, tipo persona/empresa), con marca manual de **cliente frecuente** (checkbox en el formulario; ★ dorada en la lista).
+
+**Vehículos** — CRUD completo (matrícula como identidad no editable en edición, modelo, marca, color, cliente dueño).
+
+**Órdenes de trabajo** — módulo completo:
 - **Crear orden** con líneas de servicios y refacciones (ticket en construcción con total dinámico)
 - **Stock visible**: label "Stock disponible" junto al combo de artículos, se actualiza al cambiar tipo y tras registrar
 - **Transacción con rollback**: si hay stock insuficiente, no queda ni orden ni líneas huérfanas
 - **Flujo de estados**: Abierta → En proceso → Terminada → Entregada → Pagada (semáforo de colores)
 - **Detalle de orden**: líneas, subtotales, fecha de entrada/salida, total
-- **Eliminar orden** con confirmación y borrado en cascada (detalles y pagos)
-- **Triggers de BD**: descuento automático de stock al insertar detalle y restauración al eliminar
-- **Procedimiento almacenado** `sp_crear_orden` para la cabecera de la orden
+- **Eliminar orden** con confirmación y restauración de stock vía trigger
+
+**Catálogos** — ventana con pestañas:
+- **Servicios**: alta, edición y eliminación del catálogo de mano de obra (nombre, precio)
+- **Refacciones**: alta, edición y eliminación con **inventario** (stock) y ajuste rápido **± Stock** por fila (entradas/salidas con validación de stock suficiente)
+- Todo lo dado de alta aquí aparece en los combos de Órdenes al reabrir la ventana
+
+**Aspecto general** — ventanas de módulo **redimensionables** (1120x720 por defecto, con mínimo que garantiza que no se pierda información) y layouts con columnas elásticas. Login compacto fijo.
+
+**Objetos de BD** — triggers de stock automático y procedimiento `sp_crear_orden` (ver sección abajo).
 
 
 ## Notas

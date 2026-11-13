@@ -34,6 +34,9 @@ La BD `taller_mecanico` incluye objetos almacenados definidos en `db\script_mysq
 **Nota importante (MariaDB):** los triggers no se disparan con `ON DELETE CASCADE`. Por eso, `orden_dao.eliminar()` borra los detalles explícitamente uno por uno antes de borrar la cabecera, para que el trigger de restauración se ejecute.
 
 **No re-importar `db\script_mysql.sql`** si la BD ya existe y se agregaron triggers/procedimientos después: los `INSERT` de usuarios no usan `INSERT IGNORE` y se duplicarían. Usar `db\triggers_procedures.sql` para agregar solo los objetos nuevos.
+
+## Trampas conocidas
+
 - La app debe abrir el login **aunque MySQL esté apagado** (solo advertencia en consola). `probar_conexion()` devuelve `True/False` sin lanzar excepciones; el DAO de usuarios sí lanza `RuntimeError`.
 - `vistas/login.py` y `vistas/menu_principal.py` chocan con imports circulares: importarlos **dentro de los métodos** (patrón de import tardío ya usado).
 - El flujo de sesión encadena ventanas: `LoginVista.destroy()` → `MenuPrincipalVista(usuario).mainloop()`; salir hace lo inverso. Cada `CTk` es un root Tk nuevo (los mensajes `invalid command name "..._animation"` al cerrar son ruido inofensivo de CustomTkinter).
@@ -44,7 +47,15 @@ La BD `taller_mecanico` incluye objetos almacenados definidos en `db\script_mysq
 - Nombres de variables/funciones en **español**; comentarios breves y profesionales.
 - **Solo 3 librerías** en requirements.txt: customtkinter, mysql-connector-python, python-dotenv. No añadir otras sin acordar (el hasheo bcrypt está pendiente para el ajuste final).
 - Contraseñas en texto plano por ahora (decisión de alcance); fase posterior las hashea.
-- Estética: colores/fuentes/tamaños definidos solo en `config/tema.py` (`COLOR_*`, `FUENTE_*`, `LOGIN_SIZE`, `MENU_SIZE`); las vistas no hardcodean estilos.
+- Estética: colores/fuentes/tamaños definidos solo en `config/tema.py` (`COLOR_*`, `FUENTE_*`, `LOGIN_SIZE`, `MENU_SIZE`, `MODULO_SIZE`); las vistas no hardcodean estilos.
+- Pantallas de módulo: **redimensionables** con `minsize` protector y layouts con pesos de grid (columnas elásticas). Login queda fijo 400x500 por diseño.
+
+## Módulos funcionales (estado)
+
+- Menú principal: botones conectados → **Clientes**, **Vehículos**, **Órdenes**, **Catálogos**, **Salir** (Cobros y Reportes pendientes).
+- `vistas/catalogos.py`: pestañas Servicios/Refacciones con CTkTabview; alta/edición/eliminación y ajuste de inventario (± stock) con validación. Usa `servicio_dao`/`refaccion_dao` sin lógica automática.
+- Los combos de Órdenes cargan los catálogos al abrir la ventana: ítems dados de alta en Catálogos aparecen al reabrirla.
+- `clientes` tiene campo `frecuente` (TINYINT(1)) **solo manual**: se edita con el checkbox de la vista de clientes (★ dorada en la lista); nada en órdenes/cobros lo modifica.
 
 ## Grafo de conocimiento (graphify)
 
