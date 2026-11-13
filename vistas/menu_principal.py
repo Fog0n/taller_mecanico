@@ -45,8 +45,8 @@ class MenuPrincipalVista(ctk.CTk):
             "Órdenes": self.abrir_ordenes,        # Módulo funcional
             "Catálogos": self.abrir_catalogos,    # Módulo funcional
             "Cobros": self.abrir_cobros,          # Módulo funcional
+            "Reportes": self.abrir_reportes,      # Módulo funcional
             "Salir": self.cerrar_sesion,
-            # Reportes se implementa en fases posteriores
         }
         for texto in textos:
             boton = ctk.CTkButton(
@@ -101,6 +101,12 @@ class MenuPrincipalVista(ctk.CTk):
         from vistas.cobros import CobrosVista  # Import tardío (evita ciclo)
 
         CobrosVista(self.usuario).transient(self)  # Encima del menú
+
+    def abrir_reportes(self) -> None:
+        """Abre la ventana de reportes por rango de fechas."""
+        from vistas.reportes import ReportesVista  # Import tardío (evita ciclo)
+
+        ReportesVista(self.usuario).transient(self)  # Encima del menú
 
     def cerrar_sesion(self) -> None:
         """Cierra la sesión: destruye el menú y vuelve al login."""
