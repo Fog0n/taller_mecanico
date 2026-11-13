@@ -67,6 +67,7 @@ taller_mecanico/
 │   ├── __init__.py
 │   ├── cliente_dao.py      # CRUD de clientes (incluye campo frecuente)
 │   ├── orden_dao.py        # Órdenes transaccionales (crear, estados, detalle, eliminar) + SP sp_crear_orden
+│   ├── pago_dao.py         # Pagos: registrar, listar por orden, total pagado, eliminar
 │   ├── refaccion_dao.py    # CRUD de refacciones + descontar_stock (inventario)
 │   ├── servicio_dao.py     # CRUD de servicios (catálogo)
 │   └── vehiculo_dao.py
@@ -75,6 +76,7 @@ taller_mecanico/
 │   ├── cliente.py
 │   ├── detalle_orden.py
 │   ├── orden.py
+│   ├── pago.py
 │   ├── refaccion.py
 │   ├── servicio.py
 │   ├── usuario.py
@@ -82,13 +84,15 @@ taller_mecanico/
 ├── vistas/
 │   ├── __init__.py
 │   ├── login.py            # Ventana de inicio de sesión (fija 400x500)
-│   ├── menu_principal.py   # Menú principal (Clientes, Vehículos, Órdenes, Catálogos)
+│   ├── menu_principal.py   # Menú principal (Clientes, Vehículos, Órdenes, Catálogos, Cobros)
 │   ├── clientes.py         # CRUD de clientes + marca manual de "cliente frecuente" (★)
 │   ├── vehiculos.py        # CRUD de vehículos (matrícula = PK, no editable en edición)
 │   ├── ordenes.py          # Órdenes: ticket, estados, detalle, eliminar, stock visible
-│   └── catalogos.py        # Catálogos con pestañas: servicios + refacciones e inventario (± stock)
-└── utils/                  # Utilidades (pendiente)
-    └── __init__.py
+│   ├── catalogos.py        # Catálogos con pestañas: servicios + refacciones e inventario (± stock)
+│   └── cobros.py           # Cobros maestro-detalle: pagos por orden, saldo, orden → 'pagada'
+└── utils/                  # Utilidades
+    ├── __init__.py
+    └── recarga.py          # Recarga de datos de las ventanas al recuperar el foco
 ```
 
 ## Estado actual
@@ -112,7 +116,14 @@ Login con **autenticación real** contra la tabla `usuarios` (usuarios de prueba
 - **Refacciones**: alta, edición y eliminación con **inventario** (stock) y ajuste rápido **± Stock** por fila (entradas/salidas con validación de stock suficiente)
 - Todo lo dado de alta aquí aparece en los combos de Órdenes al reabrir la ventana
 
-**Aspecto general** — ventanas de módulo **redimensionables** (1120x720 por defecto, con mínimo que garantiza que no se pierda información) y layouts con columnas elásticas. Login compacto fijo.
+**Cobros** — ventana maestro-detalle:
+- **Lista de órdenes** con Total, Pagado y Saldo (saldo rojo si debe, verde si cubierta)
+- **Panel de cobro**: resumen de la orden seleccionada, pagos registrados (fecha, método, monto) y formulario (monto pre-llenado con el saldo, método efectivo/tarjeta/transferencia)
+- **Pagos parciales** permitidos (anticipos); el monto nunca excede el saldo pendiente
+- **Regla automática**: al cubrir el saldo, la orden pasa a `pagada`
+- Pagos **eliminables** con confirmación (corrección de captura; el estado `pagada` no se revierte al borrar un pago)
+
+**Aspecto general** — ventanas de módulo **redimensionables** (1120x720 por defecto, con mínimo que garantiza que no se pierda información) y layouts con columnas elásticas. Login compacto fijo. Todas las ventanas **recargan sus datos al recuperar el foco** (si otro módulo cambió la BD, las listas se actualizan al volver).
 
 **Objetos de BD** — triggers de stock automático y procedimiento `sp_crear_orden` (ver sección abajo).
 
