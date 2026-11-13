@@ -52,10 +52,11 @@ La BD `taller_mecanico` incluye objetos almacenados definidos en `db\script_mysq
 
 ## Módulos funcionales (estado)
 
-- Menú principal: botones conectados → **Clientes**, **Vehículos**, **Órdenes**, **Catálogos**, **Cobros**, **Salir** (Reportes pendiente).
+- Menú principal: botones conectados → **Clientes**, **Vehículos**, **Órdenes**, **Catálogos**, **Cobros**, **Reportes**, **Salir** (todas las fases completas).
 - `vistas/catalogos.py`: pestañas Servicios/Refacciones con CTkTabview; alta/edición/eliminación y ajuste de inventario (± stock) con validación. Usa `servicio_dao`/`refaccion_dao` sin lógica automática.
 - Los combos de Órdenes cargan los catálogos al abrir la ventana; además las ventanas recargan al recuperar el foco (ver `utils/recarga.py`).
 - `vistas/cobros.py`: maestro-detalle de pagos (`pago_dao`). La regla "al cubrir el saldo la orden pasa a 'pagada'" vive en la VISTA (no en el DAO); pagos parciales permitidos, monto nunca excede el saldo.
+- `vistas/reportes.py` + `dao/reportes_dao.py`: 8 reportes de solo lectura. **Criterios de medición**: ingresos por pagos COBRADOS (`pagos.fecha_pago`); órdenes/ventas por órdenes CREADAS (`ordenes.fecha_entrada`). El combo de rango predefinido genera al instante; "Personalizado" valida fechas `AAAA-MM-DD`. La exportación a CSV queda como método `_exportar_csv()` sin botón (pendiente).
 - `clientes` tiene campo `frecuente` (TINYINT(1)) **solo manual**: se edita con el checkbox de la vista de clientes (★ dorada en la lista); nada en órdenes/cobros lo modifica.
 - Ventanas de módulo: redimensionables con `minsize` y recarga automática de datos al recuperar el foco (`utils/recarga.py`, debounce 0.5 s). Al agregar una vista nueva, conectar `vincular_recarga_foco(self, [...])` al final del `__init__`.
 

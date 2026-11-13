@@ -69,6 +69,7 @@ taller_mecanico/
 │   ├── orden_dao.py        # Órdenes transaccionales (crear, estados, detalle, eliminar) + SP sp_crear_orden
 │   ├── pago_dao.py         # Pagos: registrar, listar por orden, total pagado, eliminar
 │   ├── refaccion_dao.py    # CRUD de refacciones + descontar_stock (inventario)
+│   ├── reportes_dao.py     # Consultas de lectura para Reportes (8 reportes agregados)
 │   ├── servicio_dao.py     # CRUD de servicios (catálogo)
 │   └── vehiculo_dao.py
 ├── modelos/                # Clases de dominio (dataclasses)
@@ -89,7 +90,8 @@ taller_mecanico/
 │   ├── vehiculos.py        # CRUD de vehículos (matrícula = PK, no editable en edición)
 │   ├── ordenes.py          # Órdenes: ticket, estados, detalle, eliminar, stock visible
 │   ├── catalogos.py        # Catálogos con pestañas: servicios + refacciones e inventario (± stock)
-│   └── cobros.py           # Cobros maestro-detalle: pagos por orden, saldo, orden → 'pagada'
+│   ├── cobros.py           # Cobros maestro-detalle: pagos por orden, saldo, orden → 'pagada'
+│   └── reportes.py         # Reportes: 8 reportes con combo de rango, Top N y fila TOTAL
 └── utils/                  # Utilidades
     ├── __init__.py
     └── recarga.py          # Recarga de datos de las ventanas al recuperar el foco
@@ -122,6 +124,14 @@ Login con **autenticación real** contra la tabla `usuarios` (usuarios de prueba
 - **Pagos parciales** permitidos (anticipos); el monto nunca excede el saldo pendiente
 - **Regla automática**: al cubrir el saldo, la orden pasa a `pagada`
 - Pagos **eliminables** con confirmación (corrección de captura; el estado `pagada` no se revierte al borrar un pago)
+
+**Reportes** — ventana con **8 reportes** (solo consulta en pantalla):
+- **Resumen general** (cobrado, órdenes, ticket promedio, clientes atendidos), **Ingresos por día**, **Ingresos por método** (con % del total), **Órdenes por estado**, **Top servicios**, **Top refacciones**, **Ingresos por cliente** y **Actividad por usuario**
+- Panel lateral de reportes seleccionables + **combo de rango** (Hoy, Esta semana, Este mes, Mes pasado, Este año, Historial, Personalizado) que genera al instante; "Personalizado" muestra fechas manuales `AAAA-MM-DD` con validación
+- Campo **Top N** dinámico para los reportes de ranking
+- Tabla cebreada con **fila TOTAL** destacada al final
+- Criterios coherentes: ingresos por **pagos cobrados** (`fecha_pago`); órdenes y ventas por **órdenes creadas** (`fecha_entrada`)
+- Exportación a CSV: pendiente para una fase posterior (método ya preparado en la vista)
 
 **Aspecto general** — ventanas de módulo **redimensionables** (1120x720 por defecto, con mínimo que garantiza que no se pierda información) y layouts con columnas elásticas. Login compacto fijo. Todas las ventanas **recargan sus datos al recuperar el foco** (si otro módulo cambió la BD, las listas se actualizan al volver).
 
