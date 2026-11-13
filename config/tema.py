@@ -23,5 +23,6 @@ FUENTE_TEXTO = ("Arial", 13)
 FUENTE_BOTON = ("Arial", 14, "bold")
 
 # Tamaños de ventana por vista
-LOGIN_SIZE = "400x500"
-MENU_SIZE = "1000x650"
+LOGIN_SIZE = "400x500"        # Tarjeta compacta de acceso (fija)
+MENU_SIZE = "1100x700"        # Menú principal (redimensionable)
+MODULO_SIZE = "1120x720"      # Módulos CRUD (redimensionables)

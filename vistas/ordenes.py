@@ -51,8 +51,9 @@ class OrdenesVista(ctk.CTkToplevel):
 
         # Configuración de la ventana
         self.title("Taller Mecánico - Órdenes")
-        self.geometry("960x680")
-        self.resizable(False, False)
+        self.geometry(tema.MODULO_SIZE)
+        self.resizable(True, True)
+        self.minsize(960, 680)  # Nunca más pequeño: no se pierde información
 
         self._cargar_catalogos()
 
@@ -62,13 +63,17 @@ class OrdenesVista(ctk.CTkToplevel):
         self.frame_formulario = ctk.CTkFrame(self)
         self.frame_formulario.pack(fill="x", padx=15, pady=(15, 8))
 
+        # Columnas elásticas: vehículo y artículo se estiran al redimensionar
+        for col, peso in enumerate([1, 0, 2, 0, 0, 0]):
+            self.frame_formulario.grid_columnconfigure(col, weight=peso)
+
         ctk.CTkLabel(self.frame_formulario, text="Vehículo *", font=tema.FUENTE_TEXTO).grid(row=0, column=0, padx=10, sticky="w")
         self.combo_vid14 = ctk.CTkComboBox(self.frame_formulario, width=260, font=tema.FUENTE_TEXTO, state="readonly")
         self.combo_vid14.configure(
             values=list(self.vehiculos_disponibles.keys()) or ["(sin vehículos)"]
         )
         self.combo_vid14.set(list(self.vehiculos_disponibles.keys())[0] if self.vehiculos_disponibles else "(sin vehículos)")
-        self.combo_vid14.grid(row=1, column=0, padx=10, pady=(2, 10))
+        self.combo_vid14.grid(row=1, column=0, padx=10, pady=(2, 10), sticky="ew")
 
         # Tipo de línea
         ctk.CTkLabel(self.frame_formulario, text="Línea de", font=tema.FUENTE_TEXTO).grid(row=0, column=1, padx=10, sticky="w")
@@ -86,7 +91,7 @@ class OrdenesVista(ctk.CTkToplevel):
             self.frame_formulario, text="", font=("Arial", 11), text_color="#9ca3af",
         )
         self._llenar_combo_items()
-        self.combo_item.grid(row=1, column=2, padx=10, pady=(2, 10))
+        self.combo_item.grid(row=1, column=2, padx=10, pady=(2, 10), sticky="ew")
         self.label_stock.grid(row=2, column=2, padx=10, sticky="w")
 
         # Cantidad
@@ -349,6 +354,9 @@ class OrdenesVista(ctk.CTkToplevel):
         ctk.CTkLabel(
             self.frame_lista, text="", font=tema.FUENTE_BOTON,
         ).grid(row=0, column=5, padx=5)  # columna de acciones (sin texto)
+        # Ancho extra distribuido entre columnas de datos (0 = fija)
+        for col, peso in enumerate([0, 1, 2, 3, 0, 0, 0, 0]):
+            self.frame_lista.grid_columnconfigure(col, weight=peso)
 
     def _fila_orden(self, indice: int, orden, dueno: str, fondo: bool) -> None:
         """Pinta una fila de orden con sus acciones."""

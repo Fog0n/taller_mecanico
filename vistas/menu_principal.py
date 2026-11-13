@@ -22,7 +22,8 @@ class MenuPrincipalVista(ctk.CTk):
         # Configuración de la ventana
         self.title("Taller Mecánico - Menú Principal")
         self.geometry(tema.MENU_SIZE)
-        self.resizable(False, False)
+        self.resizable(True, True)
+        self.minsize(1000, 650)  # Nunca más pequeño: no se pierde información
 
         # Frame lateral (barra de navegación)
         self.frame_lateral = ctk.CTkFrame(self, width=200, corner_radius=0)

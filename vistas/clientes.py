@@ -30,12 +30,17 @@ class ClientesVista(ctk.CTkToplevel):
 
         # Configuración de la ventana
         self.title("Taller Mecánico - Clientes")
-        self.geometry("860x620")
-        self.resizable(False, False)
+        self.geometry(tema.MODULO_SIZE)
+        self.resizable(True, True)
+        self.minsize(860, 620)  # Nunca más pequeño: no se pierde información
 
         # Formulario (zona superior)
         self.frame_formulario = ctk.CTkFrame(self)
         self.frame_formulario.pack(fill="x", padx=15, pady=15)
+
+        # Columnas elásticas del formulario (aprovechan el ancho extra)
+        for col in range(4):
+            self.frame_formulario.grid_columnconfigure(col, weight=1)
 
         # id del cliente en edición (None = formulario en modo alta)
         self.cliente_seleccionado: int | None = None
@@ -93,7 +98,7 @@ class ClientesVista(ctk.CTkToplevel):
         """Crea un campo del formulario con su etiqueta y lo devuelve."""
         ctk.CTkLabel(padre, text=etiqueta, font=tema.FUENTE_TEXTO).grid(row=fila * 2, column=columna, padx=10, sticky="w")
         entrada = ctk.CTkEntry(padre, width=180, font=tema.FUENTE_TEXTO)
-        entrada.grid(row=fila * 2 + 1, column=columna, padx=10, pady=(2, 10))
+        entrada.grid(row=fila * 2 + 1, column=columna, padx=10, pady=(2, 10), sticky="ew")
         return entrada
 
     def _combo(self, padre) -> ctk.CTkComboBox:
@@ -164,7 +169,9 @@ class ClientesVista(ctk.CTkToplevel):
                 font=tema.FUENTE_BOTON, text_color="#9ca3af",
                 anchor="w",
             ).grid(row=0, column=col, padx=(5, 5), sticky="w")
-        self.frame_lista.grid_columnconfigure(len(anchos) + 1, weight=2)  # columna de botones
+        # Ancho extra distribuido entre columnas de datos (0 = fija)
+        for col, peso in enumerate([0, 3, 2, 2, 2, 1, 0, 0, 0]):
+            self.frame_lista.grid_columnconfigure(col, weight=peso)
 
     def _fila_cliente(self, indice: int, cliente, fondo: bool) -> None:
         """Pinta una fila de cliente con sus botones Editar / Eliminar.
