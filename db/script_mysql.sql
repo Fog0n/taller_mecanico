@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     rfc          VARCHAR(13)  DEFAULT NULL,
     tipo_cliente ENUM('persona_fisica', 'empresa') NOT NULL DEFAULT 'persona_fisica',
     usuario_id   INT UNSIGNED DEFAULT NULL,  -- Cliente registrado con cuenta de usuario
+    frecuente    TINYINT(1)   NOT NULL DEFAULT 0,  -- 1 = cliente frecuente (marca manual)
     PRIMARY KEY (cliente_id),
     FOREIGN KEY (usuario_id) REFERENCES usuarios (usuario_id)
         ON DELETE SET NULL ON UPDATE CASCADE

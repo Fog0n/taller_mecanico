@@ -47,6 +47,16 @@ class ClientesVista(ctk.CTkToplevel):
         self.entry_rfc = self._campo(self.frame_formulario, "RFC", 0, 3)
         self.combo_tipo = self._combo(self.frame_formulario)
 
+        # Checkbox "Cliente frecuente" (marca manual, sólo desde esta vista)
+        ctk.CTkLabel(
+            self.frame_formulario, text="Cliente frecuente",
+            font=tema.FUENTE_TEXTO,
+        ).grid(row=2, column=4, padx=10, sticky="w")
+        self.check_frecuente = ctk.CTkCheckBox(
+            self.frame_formulario, text="", font=tema.FUENTE_TEXTO,
+        )
+        self.check_frecuente.grid(row=3, column=4, padx=10, pady=(2, 10))
+
         # Botones de acción del formulario (misma línea que el combo de tipo)
         self.boton_agregar = ctk.CTkButton(
             self.frame_formulario, text="Agregar cliente", command=self.agregar_cliente,
@@ -114,7 +124,8 @@ class ClientesVista(ctk.CTkToplevel):
         if not nombre or not telefono:
             showwarning("Datos incompletos", "Nombre y teléfono son obligatorios.")
             return None
-        return nombre, telefono, email, rfc, tipo
+        frecuente = 1 if self.check_frecuente.get() else 0
+        return nombre, telefono, email, rfc, tipo, frecuente
 
     def _mensaje(self, texto: str, es_error: bool = False) -> None:
         """Muestra el resultado de la última operación."""
@@ -145,8 +156,8 @@ class ClientesVista(ctk.CTkToplevel):
 
     def _fila_encabezado(self) -> None:
         """Pinta la cabecera de la tabla."""
-        anchos = [8, 25, 15, 22, 16, 14]
-        textos = ["#", "Nombre", "Teléfono", "Email", "RFC", "Tipo"]
+        anchos = [8, 25, 15, 22, 16, 14, 7]
+        textos = ["#", "Nombre", "Teléfono", "Email", "RFC", "Tipo", "Frec"]
         for col, (texto, peso) in enumerate(zip(textos, anchos)):
             ctk.CTkLabel(
                 self.frame_lista, text=texto.ljust(peso),
@@ -178,18 +189,26 @@ class ClientesVista(ctk.CTkToplevel):
                 text_color=tema.COLOR_TEXTO, anchor="w", fg_color=color,
             ).grid(row=fila, column=col, padx=5, sticky="w")
 
-        # Botones de acción de la fila (columnas 6 y 7)
+        # Marca visual de cliente frecuente (columna 6): ★ dorada o vacía
+        ctk.CTkLabel(
+            self.frame_lista, text="★" if cliente.frecuente else "—",
+            font=tema.FUENTE_TEXTO,
+            text_color="#f59e0b" if cliente.frecuente else "#4b5563",
+            anchor="center", fg_color=color,
+        ).grid(row=fila, column=6, padx=5, sticky="w")
+
+        # Botones de acción de la fila (columnas 7 y 8)
         ctk.CTkButton(
             self.frame_lista, text="Editar", width=70, height=24,
             fg_color="#4b5563", font=("Arial", 11),
             command=lambda c=cliente: self.cargar_cliente(c),
-        ).grid(row=fila, column=6, padx=5, pady=3)
+        ).grid(row=fila, column=7, padx=5, pady=3)
 
         ctk.CTkButton(
             self.frame_lista, text="Eliminar", width=70, height=24,
             fg_color=tema.COLOR_ERROR, font=("Arial", 11),
             command=lambda c=cliente: self.eliminar_cliente(c),
-        ).grid(row=fila, column=7, padx=5, pady=3)
+        ).grid(row=fila, column=8, padx=5, pady=3)
 
     # ------------------------------------------------------------------ #
     # Acciones CRUD
@@ -249,6 +268,11 @@ class ClientesVista(ctk.CTkToplevel):
         self.combo_tipo.set(
             "Empresa" if cliente.tipo_cliente == "empresa" else "Persona física"
         )
+        # Refleja la marca manual de cliente frecuente
+        if cliente.frecuente:
+            self.check_frecuente.select()
+        else:
+            self.check_frecuente.deselect()
         self.boton_agregar.configure(state="disabled")
         self.boton_guardar.configure(state="normal")
         self._mensaje(f"Editando: {cliente.nombre}")
@@ -261,5 +285,6 @@ class ClientesVista(ctk.CTkToplevel):
         self.entry_email.delete(0, "end")
         self.entry_rfc.delete(0, "end")
         self.combo_tipo.set("Persona física")
+        self.check_frecuente.deselect()  # Nueva alta: sin marca de frecuente
         self.boton_agregar.configure(state="normal")
         self.boton_guardar.configure(state="disabled")

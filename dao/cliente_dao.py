@@ -6,18 +6,19 @@ from modelos.cliente import Cliente
 from db.conexion import obtener_conexion
 
 # Columnas que se leen/escriben en todos los métodos
-_COLUMNAS = "cliente_id, nombre, telefono, email, rfc, tipo_cliente"
+_COLUMNAS = "cliente_id, nombre, telefono, email, rfc, tipo_cliente, frecuente"
 
 
-def crear(nombre: str, telefono: str, email: str | None, rfc: str | None, tipo_cliente: str):
+def crear(nombre: str, telefono: str, email: str | None, rfc: str | None,
+          tipo_cliente: str, frecuente: int = 0):
     """Inserta un cliente nuevo y devuelve su id (cliente_id)."""
     try:
         conexion = obtener_conexion()
         cursor = conexion.cursor()
         cursor.execute(
-            "INSERT INTO clientes (nombre, telefono, email, rfc, tipo_cliente) "
-            "VALUES (%s, %s, %s, %s, %s)",
-            (nombre, telefono, email, rfc, tipo_cliente),
+            "INSERT INTO clientes (nombre, telefono, email, rfc, tipo_cliente, frecuente) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            (nombre, telefono, email, rfc, tipo_cliente, frecuente),
         )
         conexion.commit()
         id_generado = cursor.lastrowid
@@ -44,15 +45,15 @@ def obtener_todos() -> list[Cliente]:
 
 
 def actualizar(cliente_id: int, nombre: str, telefono: str, email: str | None,
-               rfc: str | None, tipo_cliente: str) -> None:
+               rfc: str | None, tipo_cliente: str, frecuente: int) -> None:
     """Actualiza los datos de un cliente existente."""
     try:
         conexion = obtener_conexion()
         cursor = conexion.cursor()
         cursor.execute(
             "UPDATE clientes SET nombre = %s, telefono = %s, email = %s, "
-            "rfc = %s, tipo_cliente = %s WHERE cliente_id = %s",
-            (nombre, telefono, email, rfc, tipo_cliente, cliente_id),
+            "rfc = %s, tipo_cliente = %s, frecuente = %s WHERE cliente_id = %s",
+            (nombre, telefono, email, rfc, tipo_cliente, frecuente, cliente_id),
         )
         conexion.commit()
         cursor.close()

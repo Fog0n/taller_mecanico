@@ -15,3 +15,4 @@ class Cliente:
     email: str | None  # Opcional: NULO si no se registra
     rfc: str | None    # Opcional: NULO si no se registra
     tipo_cliente: str  # 'persona_fisica' o 'empresa'
+    frecuente: int     # 1 = cliente frecuente (marca manual desde la vista)
