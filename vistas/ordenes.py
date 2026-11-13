@@ -18,6 +18,7 @@ from dao import refaccion_dao
 from dao import servicio_dao
 from dao import vehiculo_dao
 from dao.orden_dao import EstadoValido
+from utils.recarga import vincular_recarga_foco
 
 # Estado -> color del chip (semáforo de avance de trabajo)
 COLORES_ESTADO = {
@@ -86,7 +87,10 @@ class OrdenesVista(ctk.CTkToplevel):
 
         # Artículo (combo cambia según el tipo)
         ctk.CTkLabel(self.frame_formulario, text="Artículo *", font=tema.FUENTE_TEXTO).grid(row=0, column=2, padx=10, sticky="w")
-        self.combo_item = ctk.CTkComboBox(self.frame_formulario, width=200, font=tema.FUENTE_TEXTO, state="readonly")
+        self.combo_item = ctk.CTkComboBox(
+            self.frame_formulario, width=200, font=tema.FUENTE_TEXTO, state="readonly",
+            command=lambda _valor: self._actualizar_stock(),  # Stock al elegir artículo
+        )
         self.label_stock = ctk.CTkLabel(
             self.frame_formulario, text="", font=("Arial", 11), text_color="#9ca3af",
         )
@@ -133,6 +137,9 @@ class OrdenesVista(ctk.CTkToplevel):
         self.label_estado.pack(pady=(0, 5))
 
         self.refrescar_lista()
+        # Recarga datos al recuperar el foco: otros módulos (p. ej. Cobros
+        # marcando una orden 'pagada') pueden cambiar la BD entre tanto
+        vincular_recarga_foco(self, [self.refrescar_lista])
 
     # ------------------------------------------------------------------ #
     # Catálogos

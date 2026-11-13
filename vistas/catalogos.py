@@ -17,6 +17,7 @@ import customtkinter as ctk
 from config import tema
 from dao import servicio_dao
 from dao import refaccion_dao
+from utils.recarga import vincular_recarga_foco
 
 
 class CatalogosVista(ctk.CTkToplevel):
@@ -51,6 +52,9 @@ class CatalogosVista(ctk.CTkToplevel):
 
         self.refrescar_servicios()
         self.refrescar_refacciones()
+        # Recarga datos al recuperar el foco: otros módulos pueden haber
+        # cambiado la BD mientras esta ventana seguía abierta
+        vincular_recarga_foco(self, [self.refrescar_servicios, self.refrescar_refacciones])
 
     # ------------------------------------------------------------------ #
     # Construcción de pestañas

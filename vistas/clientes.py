@@ -13,6 +13,7 @@ import customtkinter as ctk
 
 from config import tema
 from dao import cliente_dao
+from utils.recarga import vincular_recarga_foco
 
 # Mapeo etiqueta mostrada -> valor enum de la BD
 TIPOS_CLIENTE = {
@@ -90,6 +91,9 @@ class ClientesVista(ctk.CTkToplevel):
         self.label_estado.pack(pady=(0, 5))
 
         self.refrescar_lista()
+        # Recarga datos al recuperar el foco: otros módulos pueden haber
+        # cambiado la BD mientras esta ventana seguía abierta
+        vincular_recarga_foco(self, [self.refrescar_lista])
 
     # ------------------------------------------------------------------ #
     # Construcción de campos reutilizables
