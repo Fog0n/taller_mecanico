@@ -38,11 +38,12 @@ class MenuPrincipalVista(ctk.CTk):
         ).pack(pady=(25, 20))
 
         # Botones de navegación
-        textos = ["Clientes", "Vehículos", "Órdenes", "Cobros", "Reportes", "Salir"]
+        textos = ["Clientes", "Vehículos", "Órdenes", "Catálogos", "Cobros", "Reportes", "Salir"]
         comandos = {
-            "Clientes": self.abrir_clientes,    # Módulo funcional desde esta fase
-            "Vehículos": self.abrir_vehiculos,  # Módulo funcional desde esta fase
-            "Órdenes": self.abrir_ordenes,      # Módulo funcional desde esta fase
+            "Clientes": self.abrir_clientes,      # Módulo funcional
+            "Vehículos": self.abrir_vehiculos,    # Módulo funcional
+            "Órdenes": self.abrir_ordenes,        # Módulo funcional
+            "Catálogos": self.abrir_catalogos,    # Módulo funcional
             "Salir": self.cerrar_sesion,
             # Cobros y Reportes se implementan en fases posteriores
         }
@@ -87,6 +88,12 @@ class MenuPrincipalVista(ctk.CTk):
         from vistas.ordenes import OrdenesVista  # Import tardío (evita ciclo)
 
         OrdenesVista(self.usuario).transient(self)  # Encima del menú
+
+    def abrir_catalogos(self) -> None:
+        """Abre la ventana de catálogos (servicios y refacciones)."""
+        from vistas.catalogos import CatalogosVista  # Import tardío (evita ciclo)
+
+        CatalogosVista(self.usuario).transient(self)  # Encima del menú
 
     def cerrar_sesion(self) -> None:
         """Cierra la sesión: destruye el menú y vuelve al login."""
